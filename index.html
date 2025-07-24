@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Thu Chi Cá Nhân</title>
+    <style>
+        /* General body and container styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 900px; /* Increased width for more content */
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Balance display styling */
+        #balance-display {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 10px; /* Reduced margin to make space for sub-balances */
+            font-weight: bold;
+        }
+        .balance-positive { color: green; }
+        .balance-negative { color: red; }
+
+        /* Individual cash/bank balance display */
+        #sub-balances {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 1em; /* Approx 1/3 of 2.5em (2.5 * 0.333 = 0.833) */
+            font-weight: bold;
+        }
+        .cash-balance { color: #0f02c4; } /* Blue */
+        .bank-balance { color: #db09d4; } /* Violet */
+
+
+        /* Action buttons styling (CHI/THU) */
+        .buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        #btn-expense { background-color: #e74c3c; } /* Red for Expense */
+        #btn-income { background-color: #2ecc71; }   /* Green for Income */
+
+        /* Modal (popup for transactions) styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 5% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%; /* Responsive width */
+            max-width: 600px; /* Max width for larger screens */
+            border-radius: 8px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content input, .modal-content select {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .modal-content button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .modal-content button:hover {
+            background-color: #2980b9;
+        }
+        .modal-content .modal-buttons {
+            text-align: right;
+            margin-top: 15px;
+        }
+        .modal-content .modal-buttons button {
+            margin-left: 10px;
+        }
+
+        /* Tabs styling */
+        .tabs {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: flex; /* Use flexbox for horizontal tabs */
+            justify-content: space-around; /* Distribute space evenly */
+        }
+        .tabs button {
+            background-color: inherit;
+            flex-grow: 1; /* Each tab takes equal space */
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tabs button:hover {
+            background-color: #ddd;
+        }
+        .tabs button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px 12px; /* Increased padding */
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background-color: white;
+        }
+
+        /* History Tab Specific Styles */
+        #history-filters {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 10px; /* Space between filter elements */
+        }
+        #history-filters select, #history-filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #history-filters button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #history-filters button:hover {
+            background-color: #0056b3;
+        }
+
+        #history-list table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        #history-list th, #history-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #history-list th {
+            background-color: #f2f2f2;
+        }
+        .history-amount {
+            font-weight: bold;
+        }
+        .amount-income { color: green; }
+        .amount-expense { color: red; }
+        .history-actions button {
+            padding: 5px 10px;
+            margin-left: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .history-actions .edit-btn { background-color: #ffc107; color: black;}
+        .history-actions .delete-btn { background-color: #dc3545; color: white;}
+        .history-actions .edit-btn:hover { background-color: #e0a800;}
+        .history-actions .delete-category-btn:hover { background-color: #c82333;}
+
+        /* Chart Tab Specific Styles */
+        #chart-wrapper { /* Added wrapper for horizontal scrolling */
+            overflow-x: auto;
+            width: 100%;
+            margin-top: 20px;
+            padding-bottom: 6px; /* Space for scrollbar */
+        }
+        #chart-container {
+            width: 1200px; /* Fixed width for 40 days (50px per day) */
+            height: 400px; /* Fixed height for the chart */
+            position: relative;
+        }
+        #chart-container canvas {
+            width: 100% !important; /* Override Chart.js inline style */
+            height: 100% !important; /* Override Chart.js inline style */
+        }
+
+        /* Report Tab Specific Styles */
+        #report-filters {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        #report-filters select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #report-content {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        #report-content h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        #report-content p {
+            margin-bottom: 5px;
+        }
+        .report-summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        .report-summary-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Category Pie Chart */
+        #pie-chart-container {
+            width: 100%;
+            padding-bottom: 56.25%;
+            position: relative;
+            margin-top: 20px;
+        }
+        #pie-chart-container canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        #pie-chart-caption {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Export Buttons */
+        #export-buttons {
+            margin-top: 20px;
+            text-align: right;
+        }
+        #export-buttons button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #export-buttons button:hover {
+            background-color: #218838;
+        }
+
+        /* Category management in modal */
+        #category-management {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        #category-management h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        #category-list ul {
+            list-style: none;
+            padding: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        #category-list li {
+            padding: 8px;
+            border-bottom: 1px dotted #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #category-list li:last-child {
+            border-bottom: none;
+        }
+        #category-list .delete-category-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        #category-list .delete-category-btn:hover {
+            background-color: #c82333;
+        }
+        #add-category-input {
+            width: calc(100% - 70px);
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #add-category-btn {
+            width: 60px;
+            display: inline-block;
+            vertical-align: middle;
+            padding: 10px;
+            margin-left: 5px;
+            background-color: #17a2b8;
+        }
+        #add-category-btn:hover {
+            background-color: #138496;
+        }
+
+        #categoryInput {
+            width: calc(100% - 20px); /* Adjust width */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="balance-display">$0 VND</div>
+        <div id="sub-balances">
+            <span id="cash-balance-display" class="cash-balance">💰: 0 VND</span>
+            <span id="bank-balance-display" class="bank-balance">💳: 0 VND</span>
+        </div>
+
+        <div class="buttons">
+            <button id="btn-expense">CHI</button>
+            <button id="btn-income">THU</button>
+        </div>
+
+        <!-- Expense/Income Modal -->
+        <div id="transactionModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="modal-title">Giao Dịch Mới</h2>
+                <input type="hidden" id="transactionId">
+                <label for="transactionType">Loại giao dịch:</label>
+                <select id="transactionType">
+                    <option value="expense">Chi</option>
+                    <option value="income">Thu</option>
+                </select>
+                <label for="amountInput">Số tiền:</label>
+                <input type="text" id="amountInput" placeholder="Số tiền (ví dụ: 100 = 100.000 VND)">
+                <label for="categoryInput">Danh mục:</label>
+                <select id="categoryInput">
+                    <!-- Categories will be populated by JS -->
+                </select>
+                <label for="contentInput">Nội dung:</label>
+                <input type="text" id="contentInput" placeholder="Nội dung" list="contentSuggestions">
+                <datalist id="contentSuggestions"></datalist>
+                <label for="paymentMethod">Hình thức:</label>
+                <select id="paymentMethod">
+                    <option value="cash">Tiền mặt</option>
+                    <option value="bank">Tài khoản</option>
+                </select>
+                <label for="transactionDateInput">Ngày giờ:</label>
+                <input type="datetime-local" id="transactionDateInput">
+                <div class="modal-buttons">
+                    <button id="saveTransaction">Lưu Giao Dịch</button>
+                    <button id="updateTransaction" style="display:none;">Cập Nhật</button>
+                </div>
+
+                <!-- Category Management inside modal -->
+                <div id="category-management">
+                    <h4>Quản lý Danh mục Chi tiêu</h4>
+                    <div id="add-category">
+                        <input type="text" id="add-category-input" placeholder="Thêm danh mục mới">
+                        <button id="add-category-btn">Thêm</button>
+                    </div>
+                    <div id="category-list">
+                        <ul>
+                            <!-- Categories will be listed here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tablinks" onclick="openTab(event, 'history')">Lịch sử<br>thu chi</button>
+            <button class="tablinks active" onclick="openTab(event, 'chart')">Biểu đồ</button>
+            <button class="tablinks" onclick="openTab(event, 'report')">Báo cáo</button>
+        </div>
+
+        <!-- Tab Content - History -->
+        <div id="history" class="tabcontent" >
+            <h3>Lịch sử giao dịch</h3>
+            <div id="history-filters">
+                <select id="filter-type">
+                    <option value="">Tất cả loại</option>
+                    <option value="income">Thu</option>
+                    <option value="expense">Chi</option>
+                </select>
+                <select id="filter-method">
+                    <option value="">Tất cả hình thức</option>
+                    <option value="cash">Tiền mặt</option>
+                    <option value="bank">Tài khoản</option>
+                </select>
+                <select id="filter-category">
+                    <option value="">Tất cả danh mục</option>
+                    <!-- Categories will be populated here by JS -->
+                </select>
+                <input type="month" id="filter-month">
+                <button onclick="applyFilters()">Lọc</button>
+                <button onclick="clearFilters()">Xóa Lọc</button>
+            </div>
+            <div id="history-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ngày giờ</th>
+                            <th>Số tiền</th>
+                            <th>Nội dung</th>
+                            <th>Danh mục</th>
+                            <th>Hình thức</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Transaction items will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="export-buttons">
+                <button onclick="exportToCSV()">Xuất CSV</button>
+                <button onclick="exportToExcel()">Xuất Excel</button>
+            </div>
+        </div>
+
+        <!-- Tab Content - Chart -->
+        <div id="chart" class="tabcontent" style="text-align: center; display: block;">
+            <h3>Biểu đồ chi tiêu (40 ngày)</h3>
+            <div id="chart-wrapper"> <!-- Added wrapper for horizontal scrolling -->
+                <div id="chart-container">
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
+            <hr style="margin-top: 40px; margin-bottom: 20px; text-align: center;">
+            <h3>Biểu đồ chi tiêu theo danh mục<br>(Tháng hiện tại)</h3>
+            <div id="pie-chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+            <p id="pie-chart-caption"></p>
+        </div>
+
+        <!-- Tab Content - Report -->
+        <div id="report" class="tabcontent">
+            <h3>Báo cáo tổng hợp</h3>
+            <div id="report-filters">
+                <select id="report-period">
+                    <option value="month">Theo tháng</option>
+                    <option value="quarter">Theo quý</option>
+                    <option value="year">Theo năm</option>
+                </select>
+                <input type="month" id="report-month-input" value="">
+                <input type="number" id="report-year-input" value="" min="2000" max="2100" style="display:none;">
+                <button id="generateReportBtn" onclick="generateReport()">Tạo Báo Cáo</button> <!-- Re-added "Tạo Báo Cáo" button -->
+            </div>
+            <div id="report-content">
+                <!-- Report summary will be generated here by JavaScript -->
+                <p>Chọn thời gian và nhấn "Tạo Báo Cáo" để xem báo cáo.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to Chart.js library and FileSaver.js (for export) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        // --- JavaScript Logic ---
+
+        // Get DOM elements
+        const balanceDisplay = document.getElementById('balance-display');
+        const cashBalanceDisplay = document.getElementById('cash-balance-display');
+        const bankBalanceDisplay = document.getElementById('bank-balance-display');
+        const btnExpense = document.getElementById('btn-expense');
+        const btnIncome = document.getElementById('btn-income');
+        const transactionModal = document.getElementById('transactionModal');
+        const closeButton = document.querySelector('.close-button');
+        const saveTransactionBtn = document.getElementById('saveTransaction');
+        const updateTransactionBtn = document.getElementById('updateTransaction');
+        const amountInput = document.getElementById('amountInput');
+        const contentInput = document.getElementById('contentInput');
+        const transactionType = document.getElementById('transactionType');
+        const paymentMethod = document.getElementById('paymentMethod');
+        const categoryInput = document.getElementById('categoryInput');
+        const transactionIdInput = document.getElementById('transactionId');
+        const modalTitle = document.getElementById('modal-title');
+        const transactionDateInput = document.getElementById('transactionDateInput');
+
+        const historyTableBody = document.querySelector('#history-list tbody');
+        const contentSuggestions = document.getElementById('contentSuggestions');
+
+        // Filter elements
+        const filterType = document.getElementById('filter-type');
+        const filterMethod = document.getElementById('filter-method');
+        const filterCategory = document.getElementById('filter-category');
+        const filterMonth = document.getElementById('filter-month');
+
+        // Chart elements
+        const myChartCanvas = document.getElementById('myChart');
+        const pieChartCanvas = document.getElementById('pieChart');
+        const pieChartCaption = document.getElementById('pie-chart-caption');
+
+        // Report elements
+        const reportPeriod = document.getElementById('report-period');
+        const reportMonthInput = document.getElementById('report-month-input');
+        const reportYearInput = document.getElementById('report-year-input');
+        const reportContent = document.getElementById('report-content');
+        const generateReportBtn = document.getElementById('generateReportBtn'); // Get the re-added button
+
+        // Category management elements
+        const addCategoryInput = document.getElementById('add-category-input');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const categoryListUl = document.querySelector('#category-list ul');
+
+        // Initialize data from localStorage or set defaults
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let balance = 0;
+        let contentMemory = JSON.parse(localStorage.getItem('contentMemory')) || [];
+        let categories = JSON.parse(localStorage.getItem('categories')) || ['Ăn uống', 'Đi lại', 'Hóa đơn', 'Giải trí', 'Mua sắm', 'Y tế', 'Giáo dục', 'Khác']; // Default categories
+
+        // Chart instances
+        let myChart;
+        let pieChart;
+
+        // --- Core Functions ---
+
+        /**
+         * Updates the displayed total balance and its color.
+         * Also updates individual cash and bank balances.
+         */
+        function updateBalance() {
+            let totalCash = 0;
+            let totalBank = 0;
+
+            transactions.forEach(t => {
+                if (t.method === 'cash') {
+                    totalCash += (t.type === 'income' ? t.amount : -t.amount);
+                } else if (t.method === 'bank') {
+                    totalBank += (t.type === 'income' ? t.amount : -t.amount);
+                }
+            });
+
+            balance = totalCash + totalBank;
+            balanceDisplay.textContent = `${balance.toLocaleString('vi-VN')}`;
+            balanceDisplay.classList.remove('balance-positive', 'balance-negative');
+            if (balance >= 0) {
+                balanceDisplay.classList.add('balance-positive');
+            } else {
+                balanceDisplay.classList.add('balance-negative');
+            }
+
+            cashBalanceDisplay.textContent = `💰 ${totalCash.toLocaleString('vi-VN')} `;
+            bankBalanceDisplay.textContent = `💳 ${totalBank.toLocaleString('vi-VN')} `;
+        }
+
+        /**
+         * Renders the transaction history table based on the provided transactions array.
+         * @param {Array} filteredTransactions - The array of transactions to display. Defaults to all transactions.
+         */
+        function renderHistory(filteredTransactions = transactions) {
+            historyTableBody.innerHTML = ''; // Clear existing list
+            // Sort transactions by date, newest first
+            const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedTransactions.length === 0) {
+                historyTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có giao dịch nào.</td></tr>';
+                return;
+            }
+
+            sortedTransactions.forEach(t => {
+                const tableRow = document.createElement('tr');
+                const date = new Date(t.date).toLocaleString('vi-VN');
+                const amountClass = t.type === 'income' ? 'amount-income' : 'amount-expense';
+                const sign = t.type === 'income' ? '+' : '-';
+                const categoryDisplay = t.category || 'N/A'; // Display 'N/A' if no category
+
+                tableRow.innerHTML = `
+                    <td>${date}</td>
+                    <td class="history-amount ${amountClass}">${sign}${t.amount.toLocaleString('vi-VN')} VND</td>
+                    <td>${t.content}</td>
+                    <td>${categoryDisplay}</td>
+                    <td>${t.method === 'cash' ? 'Tiền mặt' : 'Tài khoản'}</td>
+                    <td class="history-actions">
+                        <button class="edit-btn" data-id="${t.id}">Sửa</button>
+                        <button class="delete-btn" data-id="${t.id}">Xóa</button>
+                    </td>
+                `;
+                historyTableBody.appendChild(tableRow);
+            });
+
+            addHistoryActionListeners(); // Attach event listeners to new buttons
+        }
+
+        /**
+         * Attaches click event listeners to the edit and delete buttons in the history table.
+         */
+        function addHistoryActionListeners() {
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.onclick = (e) => editTransaction(e.target.dataset.id);
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.onclick = (e) => deleteTransaction(e.target.dataset.id);
+            });
+        }
+
+        /**
+         * Populates the datalist for content suggestions based on `contentMemory`.
+         */
+        function updateContentSuggestions() {
+            contentSuggestions.innerHTML = '';
+            contentMemory.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                contentSuggestions.appendChild(option);
+            });
+        }
+
+        /**
+         * Populates the category select dropdowns (for transaction input and filters).
+         */
+        function populateCategorySelects() {
+            const selects = [categoryInput, filterCategory];
+            selects.forEach(selectElement => {
+                const currentSelected = selectElement.value; // Store current selection
+                selectElement.innerHTML = ''; // Clear existing options
+
+                // Add default "All" option for filter
+                if (selectElement.id === 'filter-category') {
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Tất cả danh mục';
+                    selectElement.appendChild(defaultOption);
+                }
+
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    selectElement.appendChild(option);
+                });
+                selectElement.value = currentSelected; // Restore selection
+            });
+        }
+
+        /**
+         * Renders the list of categories in the category management section of the modal.
+         */
+        function renderCategoryList() {
+            categoryListUl.innerHTML = '';
+            categories.forEach(cat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${cat}</span>
+                    <button class="delete-category-btn" data-category="${cat}">Xóa</button>
+                `;
+                categoryListUl.appendChild(li);
+            });
+
+            document.querySelectorAll('.delete-category-btn').forEach(button => {
+                button.onclick = (e) => deleteCategory(e.target.dataset.category);
+            });
+        }
+
+        /**
+         * Adds a new category to the list.
+         */
+        function addCategory() {
+            const newCategory = addCategoryInput.value.trim();
+            if (newCategory && !categories.includes(newCategory)) {
+                categories.push(newCategory);
+                localStorage.setItem('categories', JSON.stringify(categories));
+                addCategoryInput.value = '';
+                populateCategorySelects();
+                renderCategoryList();
+                // alert('Danh mục đã được thêm.'); // Using alert for simplicity, consider custom modal
+            } else if (newCategory && categories.includes(newCategory)) {
+                // alert('Danh mục này đã tồn tại.'); // Using alert for simplicity, consider custom modal
+            }
+        }
+
+        /**
+         * Deletes a category from the list.
+         * @param {string} categoryToDelete - The category name to delete.
+         */
+        function deleteCategory(categoryToDelete) {
+            if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete}"? Các giao dịch hiện có sẽ không bị ảnh hưởng.`)) {
+                categories = categories.filter(cat => cat !== categoryToDelete);
+                localStorage.setItem('categories', JSON.stringify(categories));
+                populateCategorySelects();
+                renderCategoryList();
+                // alert('Danh mục đã được xóa.'); // Using alert for simplicity, consider custom modal
+            }
+        }
+
+        // --- Tab Handling ---
+        /**
+         * Opens the specified tab and updates active tab styling.
+         * @param {Event} evt - The click event.
+         * @param {string} tabName - The ID of the tab content to open.
+         */
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            // Trigger specific renders when tabs are opened
+            if (tabName === 'chart') {
+                renderChart();
+                renderPieChart();
+            } else if (tabName === 'history') {
+                applyFilters(); // Re-apply filters to ensure up-to-date view
+            } else if (tabName === 'report') {
+                // Set default values for report filters
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                reportMonthInput.value = `${year}-${month}`;
+                reportYearInput.value = year;
+                reportPeriod.dispatchEvent(new Event('change')); // Trigger change to show correct input
+                generateReport(); // Generate report on tab open
+            }
+        }
+
+        // --- Transaction Management ---
+        /**
+         * Populates the transaction modal with data for editing an existing transaction.
+         * @param {string} id - The ID of the transaction to edit.
+         */
+        function editTransaction(id) {
+            const transaction = transactions.find(t => t.id == id);
+            if (transaction) {
+                modalTitle.textContent = 'Chỉnh Sửa Giao Dịch';
+                transactionIdInput.value = transaction.id;
+                transactionType.value = transaction.type;
+                amountInput.value = transaction.amount / 1000; // Convert back for display
+                contentInput.value = transaction.content;
+                paymentMethod.value = transaction.method;
+                categoryInput.value = transaction.category || ''; // Set category
+                // Show/hide category input based on transaction type
+                if (transaction.type === 'income') {
+                    categoryInput.style.display = 'none';
+                } else {
+                    categoryInput.style.display = 'block';
+                }
+
+                // Set datetime-local input
+                const date = new Date(transaction.date);
+                // Adjust for local timezone offset to display correctly in datetime-local input
+                const isoDateTime = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                transactionDateInput.value = isoDateTime;
+
+                saveTransactionBtn.style.display = 'none';
+                updateTransactionBtn.style.display = 'block';
+                transactionModal.style.display = 'block';
+            }
+        }
+
+        /**
+         * Deletes a transaction by its ID.
+         * @param {string} id - The ID of the transaction to delete.
+         */
+        function deleteTransaction(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa giao dịch này?')) {
+                transactions = transactions.filter(t => t.id != id);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                updateBalance();
+                applyFilters(); // Re-render history with filters applied
+                renderChart(); // Update charts
+                renderPieChart();
+                generateReport(); // Update report
+            }
+        }
+
+        /**
+         * Saves a new transaction or updates an existing one.
+         * @param {boolean} isUpdate - True if updating an existing transaction, false if saving a new one.
+         */
+        function saveOrUpdateTransaction(isUpdate = false) {
+            let amount = parseFloat(amountInput.value) * 1000; // Convert 100 to 100,000 VND
+            const content = contentInput.value.trim();
+            const type = transactionType.value;
+            const method = paymentMethod.value;
+            const category = categoryInput.value;
+            // Get date from input, or current date if input is empty
+            const date = transactionDateInput.value ? new Date(transactionDateInput.value).toISOString() : new Date().toISOString();
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Vui lòng nhập số tiền hợp lệ.');
+                return;
+            }
+            if (!content) {
+                alert('Vui lòng nhập nội dung.');
+                return;
+            }
+            if (type === 'expense' && !category) {
+                 alert('Vui lòng chọn danh mục cho khoản chi.');
+                 return;
+            }
+
+            if (isUpdate) {
+                const id = transactionIdInput.value;
+                transactions = transactions.map(t =>
+                    t.id == id ? { ...t, amount, content, type, method, category: (type === 'expense' ? category : ''), date } : t
+                );
+                // alert('Giao dịch đã được cập nhật.'); // Using alert for simplicity
+            } else {
+                const newTransaction = {
+                    id: Date.now(),
+                    amount: amount,
+                    content: content,
+                    type: type,
+                    method: method,
+                    category: type === 'expense' ? category : '', // Only save category for expenses
+                    date: date
+                };
+                transactions.push(newTransaction);
+                // alert('Giao dịch đã được thêm.'); // Using alert for simplicity
+            }
+
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Add content to memory if not already there
+            if (content && !contentMemory.includes(content)) {
+                contentMemory.push(content);
+                localStorage.setItem('contentMemory', JSON.stringify(contentMemory));
+                updateContentSuggestions();
+            }
+
+            updateBalance();
+            applyFilters(); // Re-render history with filters applied
+            renderChart();
+            renderPieChart();
+            generateReport(); // Update report
+
+            // Clear form and hide modal
+            amountInput.value = '';
+            contentInput.value = '';
+            transactionIdInput.value = '';
+            transactionDateInput.value = '';
+            transactionModal.style.display = 'none';
+        }
+
+        // --- History Filters ---
+        /**
+         * Applies filters to the transaction history and re-renders the table.
+         */
+        function applyFilters() {
+            const typeFilter = filterType.value;
+            const methodFilter = filterMethod.value;
+            const categoryFilter = filterCategory.value;
+            const monthFilter = filterMonth.value; // Format "YYYY-MM"
+
+            const filtered = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const transactionMonth = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, '0')}`;
+
+                const matchesType = !typeFilter || t.type === typeFilter;
+                const matchesMethod = !methodFilter || t.method === methodFilter;
+                // If category filter is active, check if transaction has that category or if it's an income (which doesn't have categories)
+                const matchesCategory = !categoryFilter || (t.category === categoryFilter) || (t.type === 'income');
+                const matchesMonth = !monthFilter || transactionMonth === monthFilter;
+
+                return matchesType && matchesMethod && matchesCategory && matchesMonth;
+            });
+            renderHistory(filtered);
+        }
+
+        /**
+         * Clears all history filters and re-renders the history table.
+         */
+        function clearFilters() {
+            filterType.value = '';
+            filterMethod.value = '';
+            filterCategory.value = '';
+            filterMonth.value = '';
+            applyFilters();
+        }
+
+        // --- Chart Rendering ---
+        /**
+         * Renders the line chart showing daily expenses over the last 40 days.
+         */
+        function renderChart() {
+            const today = new Date();
+            const dates = [];
+            const expenseData = [];
+
+            // Get data for the last 40 days
+            for (let i = 39; i >= 0; i--) { // Changed to 39 to get 40 days
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                dates.push(d.toLocaleDateString('vi-VN'));
+
+                // Calculate daily expenses for the specific day
+                const transactionsOfDay = transactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return t.type === 'expense' && transactionDate.toDateString() === d.toDateString();
+                });
+                let dailyExpense = transactionsOfDay.reduce((sum, t) => sum + t.amount, 0);
+                expenseData.push(dailyExpense);
+            }
+
+            const ctx = myChartCanvas.getContext('2d');
+
+            if (myChart) {
+                myChart.destroy(); // Destroy previous chart instance if it exists
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Chi tiêu hàng ngày',
+                            data: expenseData,
+                            borderColor: '#e74c3c', // Red
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, // Set to false to control width manually for scrolling
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            // Ensure all 40 days are rendered within the fixed width
+                            // No min/max set here, allowing Chart.js to render all labels within the 2000px width
+                            ticks: {
+                                autoSkip: false, // Prevent Chart.js from skipping labels
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toLocaleString('vi-VN') + ' VND';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Renders the pie chart showing expense distribution by category for the current month.
+         */
+        function renderPieChart() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyExpenses = transactions.filter(t => {
+                const date = new Date(t.date);
+                return t.type === 'expense' && date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            });
+
+            const categoryExpenses = {};
+            let totalMonthlyExpense = 0;
+
+            monthlyExpenses.forEach(t => {
+                if (t.category) {
+                    categoryExpenses[t.category] = (categoryExpenses[t.category] || 0) + t.amount;
+                    totalMonthlyExpense += t.amount;
+                }
+            });
+
+            const labels = Object.keys(categoryExpenses);
+            const data = Object.values(categoryExpenses);
+            const backgroundColors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#8D6E63', '#9CCC65', '#D4E157',
+                '#607D8B', '#795548', '#FFEB3B', '#CDDC39', '#00BCD4', '#03A9F4', '#2196F3', '#3F51B5', '#673AB7', '#9C27B0'
+            ]; // More colors for more categories
+
+            const ctx = pieChartCanvas.getContext('2d');
+
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            if (labels.length === 0) {
+                pieChartCaption.textContent = `Không có chi tiêu theo danh mục trong tháng ${currentMonth + 1}/${currentYear}.`;
+                return;
+            } else {
+                pieChartCaption.textContent = `Chi tiêu tháng ${currentMonth + 1}/${currentYear}: ${totalMonthlyExpense.toLocaleString('vi-VN')} VND`;
+            }
+
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors.slice(0, labels.length),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = ((value / totalMonthlyExpense) * 100).toFixed(2);
+                                    return `${label}: ${value.toLocaleString('vi-VN')} VND (${percentage}%)`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'right', // Place legend to the right
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Report Generation ---
+        /**
+         * Generates and displays a financial report based on the selected period.
+         */
+        function generateReport() {
+            const periodType = reportPeriod.value;
+            let startDate, endDate, reportTitle;
+            const now = new Date();
+            let filteredReportTransactions = [];
+
+            if (periodType === 'month') {
+                const selectedMonth = reportMonthInput.value; // YYYY-MM
+                if (!selectedMonth) {
+                    reportContent.innerHTML = '<p style="color: red;">Vui lòng chọn tháng để tạo báo cáo.</p>';
+                    return;
+                }
+                const [year, month] = selectedMonth.split('-').map(Number);
+                startDate = new Date(year, month - 1, 1);
+                endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month, end of day
+                reportTitle = `Báo cáo tháng ${month}/${year}`;
+            } else if (periodType === 'quarter') {
+                const selectedYear = parseInt(reportYearInput.value);
+                if (isNaN(selectedYear)) {
+                    reportContent.innerHTML = '<p style="color: red;">Vui lòng nhập năm để tạo báo cáo.</p>';
+                    return;
+                }
+                // Determine current quarter or allow selection (for simplicity, using current quarter logic)
+                const currentMonth = now.getMonth();
+                let quarter;
+                if (currentMonth >= 0 && currentMonth <= 2) { quarter = 1; }
+                else if (currentMonth >= 3 && currentMonth <= 5) { quarter = 2; }
+                else if (currentMonth >= 6 && currentMonth <= 8) { quarter = 3; }
+                else { quarter = 4; }
+
+                const startMonth = (quarter - 1) * 3;
+                startDate = new Date(selectedYear, startMonth, 1);
+                endDate = new Date(selectedYear, startMonth + 3, 0, 23, 59, 59, 999);
+                reportTitle = `Báo cáo quý ${quarter} năm ${selectedYear}`;
+            } else if (periodType === 'year') {
+                const selectedYear = parseInt(reportYearInput.value);
+                if (isNaN(selectedYear)) {
+                    reportContent.innerHTML = '<p style="color: red;">Vui lòng nhập năm để tạo báo cáo.</p>';
+                    return;
+                }
+                startDate = new Date(selectedYear, 0, 1);
+                endDate = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+                reportTitle = `Báo cáo năm ${selectedYear}`;
+            }
+
+            filteredReportTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate >= startDate && transactionDate <= endDate;
+            });
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const expenseByCategory = {};
+
+            filteredReportTransactions.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                } else if (t.type === 'expense') {
+                    totalExpense += t.amount;
+                    if (t.category) {
+                        expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + t.amount;
+                    }
+                }
+            });
+
+            const netBalance = totalIncome - totalExpense;
+
+            let reportHtml = `<h4>${reportTitle}</h4>`;
+            reportHtml += `<div class="report-summary">`;
+            reportHtml += `<p class="report-summary-item"><span>Tổng thu:</span> <span style="color: green; font-weight: bold;">${totalIncome.toLocaleString('vi-VN')} VND</span></p>`;
+            reportHtml += `<p class="report-summary-item"><span>Tổng chi:</span> <span style="color: red; font-weight: bold;">${totalExpense.toLocaleString('vi-VN')} VND</span></p>`;
+            reportHtml += `<p class="report-summary-item"><span>Số dư ròng:</span> <span style="font-weight: bold; ${netBalance >= 0 ? 'color: green;' : 'color: red;'}">${netBalance.toLocaleString('vi-VN')} VND</span></p>`;
+            reportHtml += `</div>`;
+
+            if (Object.keys(expenseByCategory).length > 0) {
+                reportHtml += `<h4><br>Chi tiết chi tiêu theo danh mục:</h4>`;
+                reportHtml += `<ul>`;
+                for (const category in expenseByCategory) {
+                    reportHtml += `<li class="report-summary-item"><span>${category}:</span> <span>${expenseByCategory[category].toLocaleString('vi-VN')} VND</span></li>`;
+                }
+                reportHtml += `</ul>`;
+            } else {
+                reportHtml += `<p>Không có chi tiêu theo danh mục trong kỳ này.</p>`;
+            }
+
+            reportContent.innerHTML = reportHtml;
+        }
+
+        // --- Export Functions ---
+        /**
+         * Exports the currently filtered transaction history to a CSV file.
+         */
+        function exportToCSV() {
+            const data = [['Ngày giờ', 'Loại', 'Số tiền (VND)', 'Nội dung', 'Danh mục', 'Hình thức']];
+            const filteredTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const transactionMonth = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, '0')}`;
+
+                const matchesType = !filterType.value || t.type === filterType.value;
+                const matchesMethod = !filterMethod.value || t.method === filterMethod.value;
+                const matchesCategory = !filterCategory.value || t.category === filterCategory.value || t.type === 'income';
+                const matchesMonth = !filterMonth.value || transactionMonth === filterMonth.value;
+
+                return matchesType && matchesMethod && matchesCategory && matchesMonth;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date
+
+            filteredTransactions.forEach(t => {
+                const typeText = t.type === 'income' ? 'Thu' : 'Chi';
+                const methodText = t.method === 'cash' ? 'Tiền mặt' : 'Tài khoản';
+                const categoryText = t.category || '';
+                data.push([
+                    new Date(t.date).toLocaleString('vi-VN'),
+                    typeText,
+                    t.type === 'income' ? t.amount : -t.amount, // Negative for expense
+                    t.content,
+                    categoryText,
+                    methodText
+                ]);
+            });
+
+            // Convert array of arrays to CSV string
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + data.map(e => e.join(",")).join("\n");
+            // Create a Blob and use FileSaver.js to save
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, "lich_su_thu_chi.csv");
+        }
+
+        /**
+         * Exports the currently filtered transaction history to an Excel (XLSX) file.
+         */
+        function exportToExcel() {
+            const data = [['Ngày giờ', 'Loại', 'Số tiền (VND)', 'Nội dung', 'Danh mục', 'Hình thức']];
+            const filteredTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                const transactionMonth = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, '0')}`;
+
+                const matchesType = !filterType.value || t.type === filterType.value;
+                const matchesMethod = !filterMethod.value || t.method === filterMethod.value;
+                const matchesCategory = !filterCategory.value || t.category === filterCategory.value || t.type === 'income';
+                const matchesMonth = !filterMonth.value || transactionMonth === filterMonth.value;
+
+                return matchesType && matchesMethod && matchesCategory && matchesMonth;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date
+
+            filteredTransactions.forEach(t => {
+                const typeText = t.type === 'income' ? 'Thu' : 'Chi';
+                const methodText = t.method === 'cash' ? 'Tiền mặt' : 'Tài khoản';
+                const categoryText = t.category || '';
+                data.push([
+                    new Date(t.date).toLocaleString('vi-VN'),
+                    typeText,
+                    t.type === 'income' ? t.amount : -t.amount, // Negative for expense
+                    t.content,
+                    categoryText,
+                    methodText
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "LichSuThuChi");
+
+            /* generate XLSX file and send to client */
+            XLSX.writeFile(wb, "lich_su_thu_chi.xlsx");
+        }
+
+
+        // --- Event Listeners ---
+        btnExpense.addEventListener('click', () => {
+            modalTitle.textContent = 'Thêm Giao Dịch Chi';
+            transactionIdInput.value = ''; // Clear ID for new transaction
+            amountInput.value = '';
+            contentInput.value = '';
+            transactionType.value = 'expense';
+            categoryInput.style.display = 'block'; // Ensure category is visible for expense
+            categoryInput.value = categories[0] || ''; // Select first category by default
+            paymentMethod.value = 'cash';
+            // Set current date and time for new transaction
+            transactionDateInput.value = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            saveTransactionBtn.style.display = 'block';
+            updateTransactionBtn.style.display = 'none';
+            transactionModal.style.display = 'block';
+        });
+
+        btnIncome.addEventListener('click', () => {
+            modalTitle.textContent = 'Thêm Giao Dịch Thu';
+            transactionIdInput.value = ''; // Clear ID for new transaction
+            amountInput.value = '';
+            contentInput.value = '';
+            transactionType.value = 'income';
+            categoryInput.style.display = 'none'; // Hide category for income
+            categoryInput.value = ''; // Clear category selection for income
+            paymentMethod.value = 'cash';
+            // Set current date and time for new transaction
+            transactionDateInput.value = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            saveTransactionBtn.style.display = 'block';
+            updateTransactionBtn.style.display = 'none';
+            transactionModal.style.display = 'block';
+        });
+
+        // Toggle category input visibility based on transaction type
+        transactionType.addEventListener('change', () => {
+            if (transactionType.value === 'income') {
+                categoryInput.style.display = 'none';
+            } else {
+                categoryInput.style.display = 'block';
+            }
+        });
+
+
+        closeButton.addEventListener('click', () => {
+            transactionModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            if (event.target == transactionModal) {
+                transactionModal.style.display = 'none';
+            }
+        });
+
+        saveTransactionBtn.addEventListener('click', () => saveOrUpdateTransaction(false));
+        updateTransactionBtn.addEventListener('click', () => saveOrUpdateTransaction(true));
+
+        // Filter event listeners
+        filterType.addEventListener('change', applyFilters);
+        filterMethod.addEventListener('change', applyFilters);
+        filterCategory.addEventListener('change', applyFilters);
+        filterMonth.addEventListener('change', applyFilters);
+
+        // Report period change listener
+        reportPeriod.addEventListener('change', () => {
+            if (reportPeriod.value === 'month') {
+                reportMonthInput.style.display = 'inline-block';
+                reportYearInput.style.display = 'none';
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                reportMonthInput.value = `${year}-${month}`;
+            } else {
+                reportMonthInput.style.display = 'none';
+                reportYearInput.style.display = 'inline-block';
+                reportYearInput.value = new Date().getFullYear(); // Set current year
+            }
+            generateReport(); // Call generateReport directly on change
+        });
+
+        // Event listener for the re-added "Tạo Báo Cáo" button
+        generateReportBtn.addEventListener('click', generateReport);
+
+
+        // Category management listeners
+        addCategoryBtn.addEventListener('click', addCategory);
+        addCategoryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addCategory();
+            }
+        });
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBalance();
+            populateCategorySelects();
+            renderCategoryList();
+            updateContentSuggestions();
+            applyFilters(); // Initial render of history with no filters
+            // Open chart tab by default, triggering its specific render logic
+            openTab({ currentTarget: document.querySelector('.tablinks.active') }, 'chart');
+
+            // Set initial values for report filters and generate report
+            reportPeriod.value = 'month'; // Default to month
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            reportMonthInput.value = `${year}-${month}`;
+            reportYearInput.value = year; // For year/quarter
+            reportMonthInput.style.display = 'inline-block'; // Show month input by default
+            reportYearInput.style.display = 'none'; // Hide year input by default
+            generateReport(); // Generate initial report on load
+        });
+
+    </script>
+</body>
+</html>

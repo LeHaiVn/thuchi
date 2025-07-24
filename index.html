@@ -562,7 +562,49 @@
         const addCategoryInput = document.getElementById('add-category-input');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const categoryListUl = document.querySelector('#category-list ul');
-
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "firebase/app";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBegjgTmctYWKMTnvaxjyiDZE-prpzBxrY",
+          authDomain: "thuchilthai.firebaseapp.com",
+          databaseURL: "https://thuchilthai-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "thuchilthai",
+          storageBucket: "thuchilthai.firebasestorage.app",
+          messagingSenderId: "993549164252",
+          appId: "1:993549164252:web:9ec9382ced24b338bf1e19"
+        };
+        firebase.initializeApp(firebaseConfig);
+        
+        // Initialize Firebase
+        const db = initializeApp(firebaseConfig);
+        // Lưu dữ liệu
+        function save() {
+          const data = {
+            amount: parseInt(document.getElementById('amount').value),
+            content: document.getElementById('content').value,
+            type: document.getElementById('type').value,
+            date: new Date().toISOString()
+          };
+          db.ref('transactions').push(data);
+          document.getElementById('amount').value = '';
+          document.getElementById('content').value = '';
+        }
+    
+        // Tải dữ liệu
+        db.ref('transactions').on('value', snapshot => {
+          const list = document.getElementById('list');
+          list.innerHTML = '';
+          snapshot.forEach(item => {
+            const d = item.val();
+            const li = document.createElement('li');
+            li.textContent = `[${d.type}] ${d.amount.toLocaleString()} VND - ${d.content}`;
+            list.appendChild(li);
+          });
+        });
         // Initialize data from localStorage or set defaults
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let balance = 0;
